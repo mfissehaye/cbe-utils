@@ -1,7 +1,7 @@
 {
-  "name": "cbe-utils",
+  "name": "@mfissehaye/cbe-utils",
   "version": "1.0.0",
-  "description": "",
+  "description": "A TypeScript utility library for CBE (Commercial Bank of Ethiopia) payment verification and transaction processing",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,6 +12,11 @@
       "require": "./dist/index.cjs"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite --mode development",
     "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
@@ -19,11 +24,32 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build && pnpm test:run"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "cbe",
+    "commercial-bank-ethiopia",
+    "payment-verification",
+    "transaction-processing",
+    "banking",
+    "fintech",
+    "ethiopia",
+    "typescript",
+    "utils"
+  ],
+  "author": "Merhawi Fissehaye",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mfissehaye/cbe-utils.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mfissehaye/cbe-utils/issues"
+  },
+  "homepage": "https://github.com/mfissehaye/cbe-utils#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "@types/node": "^24.1.0",

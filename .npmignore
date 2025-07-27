@@ -1,0 +1,24 @@
+# Source files (we only want the built dist/)
+src/
+test/
+
+# Development files
+.github/
+coverage/
+node_modules/
+
+# Config files
+vite.config.ts
+tsconfig.json
+.gitignore
+pnpm-lock.yaml
+
+# Development artifacts
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.* 

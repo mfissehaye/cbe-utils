@@ -1,0 +1,133 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test:run
+
+      - name: Run coverage
+        run: pnpm coverage
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: pnpm build
+
+      - name: Check if version changed
+        id: version-check
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view @mfissehaye/cbe-utils version 2>/dev/null || echo "0.0.0")
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "published-version=$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to NPM
+        if: steps.version-check.outputs.should-publish == 'true'
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release (Version Change)
+        if: steps.version-check.outputs.should-publish == 'true'
+        run: |
+          # Generate release notes
+          echo "## What's Changed" > release_notes.md
+          echo "" >> release_notes.md
+          echo "Published version ${{ steps.version-check.outputs.current-version }} to NPM" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Installation" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "npm install @mfissehaye/cbe-utils@${{ steps.version-check.outputs.current-version }}" >> release_notes.md
+          echo '```' >> release_notes.md
+          
+          # Create release with generated notes
+          gh release create "v${{ steps.version-check.outputs.current-version }}" \
+            --title "Release v${{ steps.version-check.outputs.current-version }}" \
+            --notes-file release_notes.md \
+            --generate-notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Create releases on every push to main (uncomment if desired)
+  # release-on-push:
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #
+  #     - name: Create GitHub Release (Every Push)
+  #       run: |
+  #         # Get short commit hash and commit message
+  #         COMMIT_HASH=$(git rev-parse --short HEAD)
+  #         COMMIT_MSG=$(git log -1 --pretty=%B)
+  #         TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+  #         TAG_NAME="build-${TIMESTAMP}-${COMMIT_HASH}"
+  #         
+  #         # Generate release notes
+  #         echo "## Build Release" > release_notes.md
+  #         echo "" >> release_notes.md
+  #         echo "**Commit:** ${COMMIT_HASH}" >> release_notes.md
+  #         echo "**Message:** ${COMMIT_MSG}" >> release_notes.md
+  #         echo "" >> release_notes.md
+  #         echo "### Recent Changes" >> release_notes.md
+  #         
+  #         # Create release
+  #         gh release create "${TAG_NAME}" \
+  #           --title "Build ${TIMESTAMP}" \
+  #           --notes-file release_notes.md \
+  #           --generate-notes \
+  #           --prerelease
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
