@@ -6,12 +6,12 @@ export const CBE_VERIFICATION_BASE_URL = 'https://apps.cbe.com.et:100';
 /**
  * Regular expression to validate transaction reference numbers
  */
-export const TRANSACTION_REFERENCE_REGEX = /^[A-Z0-9]+$/;
+export const TRANSACTION_REFERENCE_REGEX = /FT[a-zA-Z0-9]{10}/;
 
 /**
  * Regular expression to validate transaction URLs
  */
-export const TRANSACTION_URL_REGEX = /^https?:\/\/.+/;
+export const TRANSACTION_URL_REGEX = /https:\/\/apps.cbe.com.et:100\/\?id=FT[a-zA-Z0-9]{18}/;
 
 /**
  * Default maximum transaction age in hours
