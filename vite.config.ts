@@ -22,7 +22,10 @@ export default defineConfig({
         'node:path',
         'https',
         'path'
-      ]
+      ],
+      output: {
+        exports: 'named'
+      }
     }
   },
   test: {
