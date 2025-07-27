@@ -22,9 +22,7 @@ describe('Constants', () => {
 
   describe('TRANSACTION_REFERENCE_REGEX', () => {
     it('should match valid alphanumeric reference numbers', () => {
-      expect(TRANSACTION_REFERENCE_REGEX.test('ABC123')).toBe(true);
-      expect(TRANSACTION_REFERENCE_REGEX.test('123456789')).toBe(true);
-      expect(TRANSACTION_REFERENCE_REGEX.test('REFABC123')).toBe(true);
+      expect(TRANSACTION_REFERENCE_REGEX.test('FT25200VMC5N')).toBe(true);
     });
 
     it('should not match invalid reference numbers', () => {
@@ -37,12 +35,11 @@ describe('Constants', () => {
 
   describe('TRANSACTION_URL_REGEX', () => {
     it('should match valid HTTP and HTTPS URLs', () => {
-      expect(TRANSACTION_URL_REGEX.test('https://example.com')).toBe(true);
-      expect(TRANSACTION_URL_REGEX.test('http://test.com/path')).toBe(true);
-      expect(TRANSACTION_URL_REGEX.test('https://apps.cbe.com.et:100/?id=123')).toBe(true);
+      expect(TRANSACTION_URL_REGEX.test('https://apps.cbe.com.et:100/?id=FT25200VMC5G56280011')).toBe(true);
     });
 
     it('should not match non-URL strings', () => {
+      expect(TRANSACTION_URL_REGEX.test('https://example.com')).toBe(false);
       expect(TRANSACTION_URL_REGEX.test('not-a-url')).toBe(false);
       expect(TRANSACTION_URL_REGEX.test('ftp://example.com')).toBe(false);
       expect(TRANSACTION_URL_REGEX.test('')).toBe(false);

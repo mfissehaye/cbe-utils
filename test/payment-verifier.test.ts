@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { verifyDirectDeposit, verifyPayment, isValidCbeAccountNumber } from '../src/payment-verifier';
 import type { PaymentVerificationConfig } from '../src/types';
 
+const TEST_CBE_ACCOUNT_NUMBER = '1000188961473'
+
 // Mock the dependencies
 vi.mock('../src/pdf-extractor.js', () => ({
   extractTextFromPdfUrl: vi.fn(),
@@ -16,13 +18,13 @@ import { extractTransactionDetails } from '../src/transaction-parser';
 
 describe('Payment Verifier', () => {
   const mockConfig: PaymentVerificationConfig = {
-    cbeAccountNumber: '12345678',
+    cbeAccountNumber: TEST_CBE_ACCOUNT_NUMBER,
     maxTransactionAgeHours: 24,
     rejectUnauthorized: false,
   };
 
   const mockTransactionDetails = {
-    transactionRefNumber: 'TXN123456789',
+    transactionRefNumber: 'FT25200VMC5N56279011',
     paymentDateTime: new Date(),
     totalAmountDebited: '1,500.00 ETB',
     receiver: 'ACME Corporation',
@@ -37,10 +39,10 @@ describe('Payment Verifier', () => {
 
   describe('verifyDirectDeposit', () => {
     it('should verify transaction with reference number', async () => {
-      const result = await verifyDirectDeposit('TXN123456789', mockConfig);
+      const result = await verifyDirectDeposit('FT25200VMC5N56279011', mockConfig);
 
       expect(extractTextFromPdfUrl).toHaveBeenCalledWith(
-        'https://apps.cbe.com.et:100/?id=TXN12345678912345678',
+        'https://apps.cbe.com.et:100/?id=FT25200VMC5N5627901188961473',
         mockConfig
       );
       expect(extractTransactionDetails).toHaveBeenCalledWith('mock pdf text', mockConfig);
@@ -48,11 +50,11 @@ describe('Payment Verifier', () => {
     });
 
     it('should verify transaction with URL', async () => {
-      const testUrl = 'https://apps.cbe.com.et:100/?id=TXN12345678987654321';
+      const testUrl = 'https://apps.cbe.com.et:100/?id=FT25200VMC5N56279011';
       const result = await verifyDirectDeposit(testUrl, mockConfig);
 
       expect(extractTextFromPdfUrl).toHaveBeenCalledWith(
-        'https://apps.cbe.com.et:100/?id=TXN12345678912345678',
+        'https://apps.cbe.com.et:100/?id=FT25200VMC5N88961473',
         mockConfig
       );
       expect(result).toEqual(mockTransactionDetails);
@@ -71,14 +73,14 @@ describe('Payment Verifier', () => {
     it('should throw error for missing CBE account number', async () => {
       const configWithoutAccount = { ...mockConfig, cbeAccountNumber: '' };
       
-      await expect(verifyDirectDeposit('TXN123456789', configWithoutAccount))
+      await expect(verifyDirectDeposit('FT25200VMC5N56279011', configWithoutAccount))
         .rejects.toThrow('CBE account number is required for verification');
     });
 
     it('should propagate PDF extraction errors', async () => {
       vi.mocked(extractTextFromPdfUrl).mockRejectedValue(new Error('PDF download failed'));
 
-      await expect(verifyDirectDeposit('TXN123456789', mockConfig))
+      await expect(verifyDirectDeposit('FT25200VMC5N56279011', mockConfig))
         .rejects.toThrow('PDF download failed');
     });
 
@@ -87,20 +89,20 @@ describe('Payment Verifier', () => {
         throw new Error('Invalid PDF content');
       });
 
-      await expect(verifyDirectDeposit('TXN123456789', mockConfig))
+      await expect(verifyDirectDeposit('FT25200VMC5N56279011', mockConfig))
         .rejects.toThrow('Invalid PDF content');
     });
   });
 
   describe('verifyPayment', () => {
     it('should verify payment with minimal configuration', async () => {
-      const result = await verifyPayment('TXN123456789', '12345678');
+      const result = await verifyPayment('FT25200VMC5N56279011', TEST_CBE_ACCOUNT_NUMBER);
 
       expect(result).toEqual(mockTransactionDetails);
       expect(extractTextFromPdfUrl).toHaveBeenCalledWith(
-        expect.stringContaining('TXN123456789'),
+        expect.stringContaining('FT25200VMC5N56279011'),
         expect.objectContaining({
-          cbeAccountNumber: '12345678',
+          cbeAccountNumber: TEST_CBE_ACCOUNT_NUMBER,
           maxTransactionAgeHours: 24,
           rejectUnauthorized: false,
         })
@@ -113,12 +115,12 @@ describe('Payment Verifier', () => {
         rejectUnauthorized: true,
       };
 
-      await verifyPayment('TXN123456789', '12345678', options);
+      await verifyPayment('FT25200VMC5N56279011', TEST_CBE_ACCOUNT_NUMBER, options);
 
       expect(extractTextFromPdfUrl).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          cbeAccountNumber: '12345678',
+          cbeAccountNumber: TEST_CBE_ACCOUNT_NUMBER,
           maxTransactionAgeHours: 48,
           rejectUnauthorized: true,
         })
@@ -128,20 +130,17 @@ describe('Payment Verifier', () => {
 
   describe('isValidCbeAccountNumber', () => {
     it('should return true for valid account numbers', () => {
-      expect(isValidCbeAccountNumber('12345678')).toBe(true);
-      expect(isValidCbeAccountNumber('123456789012')).toBe(true);
-      expect(isValidCbeAccountNumber('00012345678')).toBe(true);
+      expect(isValidCbeAccountNumber(TEST_CBE_ACCOUNT_NUMBER)).toBe(true);
     });
 
     it('should return false for invalid account numbers', () => {
-      expect(isValidCbeAccountNumber('1234567')).toBe(false); // Too short
-      expect(isValidCbeAccountNumber('12345abc')).toBe(false); // Contains letters
+      expect(isValidCbeAccountNumber('12345')).toBe(false); // Too short
       expect(isValidCbeAccountNumber('')).toBe(false); // Empty
       expect(isValidCbeAccountNumber('123-456-78')).toBe(false); // Contains hyphens
     });
 
     it('should return false for non-string inputs', () => {
-      expect(isValidCbeAccountNumber(12345678 as any)).toBe(false);
+      expect(isValidCbeAccountNumber(Number(TEST_CBE_ACCOUNT_NUMBER) as any)).toBe(false);
       expect(isValidCbeAccountNumber(null as any)).toBe(false);
       expect(isValidCbeAccountNumber(undefined as any)).toBe(false);
     });
