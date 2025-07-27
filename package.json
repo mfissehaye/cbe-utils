@@ -1,6 +1,6 @@
 {
   "name": "@mfissehaye/cbe-utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A TypeScript utility library for CBE (Commercial Bank of Ethiopia) payment verification and transaction processing",
   "main": "dist/index.cjs",
   "module": "dist/index.js",

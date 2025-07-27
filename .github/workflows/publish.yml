@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -76,8 +80,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release (Version Change)
+      - name: Check if release exists
         if: steps.version-check.outputs.should-publish == 'true'
+        id: release-check
+        run: |
+          if gh release view "v${{ steps.version-check.outputs.current-version }}" --repo mfissehaye/cbe-utils 2>/dev/null; then
+            echo "release-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "release-exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release (Version Change)
+        if: steps.version-check.outputs.should-publish == 'true' && steps.release-check.outputs.release-exists == 'false'
         run: |
           # Generate release notes
           echo "## What's Changed" > release_notes.md
@@ -93,7 +109,8 @@ jobs:
           gh release create "v${{ steps.version-check.outputs.current-version }}" \
             --title "Release v${{ steps.version-check.outputs.current-version }}" \
             --notes-file release_notes.md \
-            --generate-notes
+            --generate-notes \
+            --repo mfissehaye/cbe-utils
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
